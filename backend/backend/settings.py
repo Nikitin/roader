@@ -61,6 +61,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 #TODO: Remove this in production and set exact domain
 
 
+# TO enable the use of X-Forwarded-Host header, set the following:
+USE_X_FORWARDED_HOST = True
+
+# TO enable HTTPS in Django when behind a reverse proxy like Nginx, set the following:
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
@@ -115,7 +122,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/roader/static/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
