@@ -1,0 +1,33 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Lint Backend (Python)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 backend/
+
+      # Lint Client (Flutter)
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install client dependencies
+        run: flutter pub get
+        working-directory:./client
+      - name: Analyze client code
+        run: flutter analyze
+        working-directory:./client

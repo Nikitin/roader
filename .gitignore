@@ -1,3 +1,24 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.user
+*.log
+*.orig
+
+# Docker
+docker-compose.override.yml
+
+# Python / Django
+__pycache__/
+*.pyc
+.env
+.env.db
+venv/
+*.sqlite3
+
+
 # Miscellaneous
 *.class
 *.lock
