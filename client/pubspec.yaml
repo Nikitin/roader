@@ -1,0 +1,44 @@
+name: client
+description: "Mobile client for Roader, a mobile app to analyse the road conditions in your area and eventually report them to the community. It is a part of the Roader project, which includes a backend and a web client."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+# This section defines the dependencies required for the Flutter project.
+# 
+# flutter:
+#   The core Flutter SDK is essential for building and running Flutter applications.
+#
+# cupertino_icons:
+#   Provides a set of high-quality icons following the iOS design guidelines, useful for iOS-styled applications.
+#
+# sensors_plus:
+#   A plugin to access device sensors such as accelerometer, gyroscope, and magnetometer, enabling motion-based features.
+#
+# geolocator:
+#   A plugin for location-based services, allowing access to GPS and geolocation functionalities.
+#
+# http:
+#   A package for making HTTP requests, useful for interacting with REST APIs and fetching data from the internet.
+#
+# permission_handler:
+#   A plugin to manage and request permissions on the device, ensuring proper access to restricted resources like location or sensors.
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  sensors_plus: ^6.1.1
+  geolocator: ^14.0.1 
+  http: ^1.4.0 
+  permission_handler: ^12.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
