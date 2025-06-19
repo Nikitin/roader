@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Road Quality Heatmap</title>
+    <meta charset="utf-g"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+    // Initialize the map
+    const map = L.map('map').setView([53.9045, 27.5615], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Функция для получения данных и обновления карты
+    async function fetchAndDrawHeatmap() {
+        try {
+            const response = await fetch('/api/heatmap-data/');
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                const heat = L.heatLayer(data, {
+                    radius: 20,
+                    blur: 15,
+                    maxZoom: 18,
+                    // Can adjust the gradient to represent different values
+                    gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
+                }).addTo(map);
+            } else {
+                console.log("No data to display on heatmap.");
+            }
+        } catch (error) {
+            console.error('Error fetching heatmap data:', error);
+        }
+    }
+
+    // Initial call to fetch and draw the heatmap
+    fetchAndDrawHeatmap();
+
+    // Optional: Set an interval to refresh the heatmap every 30 seconds
+    // setInterval(fetchAndDrawHeatmap, 30000);
+
+</script>
+
+</body>
+</html>
