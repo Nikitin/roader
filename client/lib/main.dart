@@ -6,8 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
-// URL of your backend. Replace with the IP or add of your server.
-const String backendUrl = 'http://nikitin.by/roader/api/ingest/';
+// URL вашего бэкенда. Убедитесь, что он доступен с телефона.
+// Используем https, так как ваш сервер настроен на SSL.
+const String backendUrl = 'https://nikitin.by/roader/api/ingest/';
 
 void main() {
   runApp(const MyApp());
@@ -40,8 +41,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isRecording = false;
   StreamSubscription? _accelerometerSubscription;
   StreamSubscription? _positionSubscription;
-  
-  final List<Map<String, dynamic>> _dataBuffer =;
+
+  // ИСПРАВЛЕНИЕ 1: Инициализация пустого списка
+  final List<Map<String, dynamic>> _dataBuffer = [];
   Timer? _uploadTimer;
 
   Position? _currentPosition;
@@ -54,8 +56,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _requestPermissions() async {
-    await Permission.location.request();
+    // Geolocator сам обрабатывает запросы разрешений, но для sensors лучше запросить явно.
     await Permission.sensors.request();
+    // Проверим и запросим разрешение на геолокацию
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
   }
 
   void _toggleRecording() {
@@ -65,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _startRecording();
     }
     setState(() {
-      _isRecording =!_isRecording;
+      _isRecording = !_isRecording;
     });
   }
 
@@ -74,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 1, // Update with 1 meter interval.
+        distanceFilter: 1, // Обновление при смещении на 1 метр.
       ),
     ).listen((Position position) {
       setState(() {
@@ -86,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _accelerometerSubscription = userAccelerometerEvents.listen(
       (UserAccelerometerEvent event) {
         _latestAccelerometerEvent = event;
-        if (_currentPosition!= null) {
+        if (_currentPosition != null) {
           _collectDataPoint(event, _currentPosition!);
         }
       },
@@ -102,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _accelerometerSubscription?.cancel();
     _positionSubscription?.cancel();
     _uploadTimer?.cancel();
-    _uploadData(); // Upload any remaining data points
+    _uploadData(); // Загрузить оставшиеся точки данных
     setState(() {
       _currentPosition = null;
       _latestAccelerometerEvent = null;
@@ -140,16 +147,16 @@ class _MyHomePageState extends State<MyHomePage> {
         body: json.encode(dataToSend),
       );
 
-      if (response.statusCode == 202) {
-        print('Successfully uploaded ${dataToSend.length} data points.');
+      if (response.statusCode == 202) { // Accepted
+        print('Успешно загружено ${dataToSend.length} точек данных.');
       } else {
-        print('Failed to upload data. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        // Re-add the data to the buffer if upload fails
+        print('Ошибка загрузки данных. Код состояния: ${response.statusCode}');
+        print('Тело ответа: ${response.body}');
+        // Возвращаем данные в буфер при ошибке
         _dataBuffer.addAll(dataToSend);
       }
     } catch (e) {
-      print('Error uploading data: $e');
+      print('Ошибка при загрузке данных: $e');
       _dataBuffer.addAll(dataToSend);
     }
   }
@@ -169,13 +176,26 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>,
+          // ИСПРАВЛЕНИЕ 2: Добавлены виджеты для отображения информации
+          children: <Widget>[
+            Text(
+              _isRecording ? 'Запись активна' : 'Нажмите Play для начала записи',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 20),
+            Text('Точек в буфере: ${_dataBuffer.length}'),
+            const SizedBox(height: 10),
+            if (_currentPosition != null)
+              Text('GPS: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}'),
+            if (_latestAccelerometerEvent != null)
+              Text('Акселерометр: X: ${_latestAccelerometerEvent!.x.toStringAsFixed(2)}, Y: ${_latestAccelerometerEvent!.y.toStringAsFixed(2)}, Z: ${_latestAccelerometerEvent!.z.toStringAsFixed(2)}'),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _toggleRecording,
         tooltip: 'Toggle Recording',
-        child: Icon(_isRecording? Icons.stop : Icons.play_arrow),
+        child: Icon(_isRecording ? Icons.stop : Icons.play_arrow),
       ),
     );
   }
