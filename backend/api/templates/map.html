@@ -35,7 +35,7 @@
     // Функция для получения данных и обновления карты
     async function fetchAndDrawHeatmap() {
         try {
-            const response = await fetch('/roader/api/heatmap-data/');
+            const response = await fetch('/roader/api/heatmap/');
             const data = await response.json();
             
             if (data && data.length > 0) {
