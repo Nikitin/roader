@@ -4,7 +4,7 @@ from.models import ProcessedPoint
 
 # Threshold value for acceleration magnitude to detect anomalies.
 # This is determined experimentally. Starting with 15.0 m/s^2.
-SEVERITY_THRESHOLD = 15.0
+SEVERITY_THRESHOLD = 1.0
 
 @shared_task
 def process_data_packet(data_packet):
