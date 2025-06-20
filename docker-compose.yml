@@ -1,32 +1,79 @@
 version: '3.8'
 
 services:
-  # Service for Django application
+  # --- MONITORING SERVICES ---
+  loki:
+    image: grafana/loki:2.9.0
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    # Port 3000 will only be accessible inside the Docker network. Nginx will proxy requests to it.
+    expose:
+      - "3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - default
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      # Access to logs of all containers
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Configuration file for promtail
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - default
+
+  # --- APPLICATION SERVICES ---
   web:
     build: ./backend
     command: gunicorn backend.wsgi:application --bind 0.0.0.0:8000
+    # IMPORTANT: Replaced 'ports' with 'expose' to restrict external access
+    expose:
+      - "8000"
     volumes:
       - ./backend:/app
-    ports:
-      - "8000:8000"
     env_file:
       - ./.env.db
     depends_on:
       - rabbitmq
       - redis
+    # Add logging driver for collection by Promtail
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    networks:
+      - default
 
-  # Service for the RabbitMQ message broker
   rabbitmq:
     image: rabbitmq:3.9-management-alpine
     ports:
-      - "5672:5672"   # Port for Celery
-      - "15672:15672"  # Port for the RabbitMQ web interface (useful for debugging)
+      # Keep RabbitMQ web interface accessible for debugging
+      - "15672:15672"
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    networks:
+      - default
 
-  # Service for Redis (used by Celery to store task results)
   redis:
     image: redis:6.2-alpine
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    networks:
+      - default
 
-  # Service for the Celery background task processor
   celery:
     build: ./backend
     command: celery -A backend worker -l info
@@ -37,3 +84,13 @@ services:
     depends_on:
       - rabbitmq
       - redis
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
+    networks:
+      - default
+
+# Docker will manage this volume for storing Grafana data (dashboards, etc.)
+volumes:
+  grafana-data:
